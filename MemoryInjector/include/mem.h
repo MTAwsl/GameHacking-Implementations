@@ -2,7 +2,9 @@
 #include <Windows.h>
 #include <vector>
 
-namespace offset {
+namespace mem {
 	uintptr_t FindDMAddress(uintptr_t base, std::vector<unsigned int> offsets);
 	uintptr_t FindDMAddressEx(HANDLE hProc, uintptr_t base, std::vector<unsigned int> offsets);
+	uintptr_t aobscan(uintptr_t start, uintptr_t end, char* pattern);
+	uintptr_t aobscanEx(HANDLE hProc, uintptr_t start, uintptr_t end, char* pattern);
 }

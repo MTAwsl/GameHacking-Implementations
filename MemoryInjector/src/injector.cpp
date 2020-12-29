@@ -85,3 +85,59 @@ void hook::DetourEx(HANDLE hProc, void* dst, void* func, const size_t size) {
 	VirtualProtectEx(hProc, dst, size, oldProtect, &oldProtect);
 }
 #endif
+
+#ifndef _WIN64
+uintptr_t hook::TrampHook(void* dst, void* func, size_t size) {
+	if (size < 5) {
+#ifdef _DEBUG
+		MessageBoxW(NULL, L"Error in detour: your buffer size could not less than 5", L"ERROR", MB_OK | MB_ICONERROR);
+#endif
+		return;
+	}
+	uintptr_t gateway = (uintptr_t)VirtualAlloc(NULL, size + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
+	memcpy((void*)gateway, dst, size);
+	hook::Detour(dst, (void*)gateway, size);
+	hook::Detour((void*)(gateway + size), func, 5);
+	return gateway;
+}
+uintptr_t hook::TrampHookEx(HANDLE hProc, void* dst, void* func, size_t size) {
+	if (size < 5) {
+#ifdef _DEBUG
+		MessageBoxW(NULL, L"Error in detour: your buffer size could not less than 5", L"ERROR", MB_OK | MB_ICONERROR);
+#endif
+		return;
+	}
+	uintptr_t gateway = (uintptr_t)VirtualAllocEx(hProc, NULL, size + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
+	memcpy((void*)gateway, dst, size);
+	hook::DetourEx(hProc, dst, (void*)gateway, size);
+	hook::DetourEx(hProc, (void*)(gateway + size), func, 5);
+	return gateway;
+}
+#else
+uintptr_t hook::TrampHook(void* dst, void* func, size_t size) {
+	if (size < 13) {
+#ifdef _DEBUG
+		MessageBoxW(NULL, L"Error in detour: your buffer size could not less than 13", L"ERROR", MB_OK | MB_ICONERROR);
+#endif
+		return;
+	}
+	uintptr_t gateway = (uintptr_t)VirtualAlloc(NULL, size + 13, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
+	memcpy((void*)gateway, dst, size);
+	hook::Detour(dst, (void*)gateway, size);
+	hook::Detour((void*)(gateway + size), func, 13);
+	return gateway;
+}
+uintptr_t hook::TrampHookEx(HANDLE hProc, void* dst, void* func, size_t size) {
+	if (size < 13) {
+#ifdef _DEBUG
+		MessageBoxW(NULL, L"Error in detour: your buffer size could not less than 13", L"ERROR", MB_OK | MB_ICONERROR);
+#endif
+		return;
+	}
+	uintptr_t gateway = (uintptr_t)VirtualAllocEx(hProc, NULL, size + 13, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
+	memcpy((void*)gateway, dst, size);
+	hook::DetourEx(hProc, dst, (void*)gateway, size);
+	hook::DetourEx(hProc, (void*)(gateway + size), func, 13);
+	return gateway;
+}
+#endif
