@@ -40,7 +40,7 @@ uintptr_t proc::GetModuleBaseAddress(HANDLE hProc, LPCWSTR moduleName)
 	ZeroMemory(&modEntry, sizeof(modEntry));
 	modEntry.dwSize = sizeof(modEntry);
 
-	// Walk through all process
+	// Walk through all module
 	Module32First(hSnap, &modEntry);
 	do {
 		if (!wcscmp(moduleName, modEntry.szModule)) {

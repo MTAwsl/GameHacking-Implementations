@@ -154,12 +154,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\injector.cpp" />
-    <ClCompile Include="src\offsets.cpp" />
+    <ClCompile Include="src\mem.cpp" />
     <ClCompile Include="src\process.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\injector.h" />
-    <ClInclude Include="include\offsets.h" />
+    <ClInclude Include="include\mem.h" />
     <ClInclude Include="include\process.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
