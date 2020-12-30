@@ -121,10 +121,11 @@ uintptr_t hook::TrampHook(void* dst, void* func, size_t size) {
 #endif
 		return;
 	}
-	uintptr_t gateway = (uintptr_t)VirtualAlloc(NULL, size + 13, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
-	memcpy((void*)gateway, dst, size);
-	hook::Detour(dst, (void*)gateway, size);
-	hook::Detour((void*)(gateway + size), func, 13);
+	uintptr_t gateway = (uintptr_t)VirtualAlloc(NULL, size + 14, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
+	*(byte*)gateway = 0x58; // pop rax
+	memcpy((void*)(gateway + 1), dst, size);
+	hook::Detour(dst, (void*)(gateway + 1), size);
+	hook::Detour((void*)(gateway + size + 1), func, 13);
 	return gateway;
 }
 uintptr_t hook::TrampHookEx(HANDLE hProc, void* dst, void* func, size_t size) {
@@ -134,10 +135,12 @@ uintptr_t hook::TrampHookEx(HANDLE hProc, void* dst, void* func, size_t size) {
 #endif
 		return;
 	}
-	uintptr_t gateway = (uintptr_t)VirtualAllocEx(hProc, NULL, size + 13, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
-	memcpy((void*)gateway, dst, size);
-	hook::DetourEx(hProc, dst, (void*)gateway, size);
-	hook::DetourEx(hProc, (void*)(gateway + size), func, 13);
+	uintptr_t gateway = (uintptr_t)VirtualAllocEx(hProc, NULL, size + 14, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE); // Restore stolen bytes.
+	byte opcode = 0x58; //pop rax
+	WriteProcessMemory(hProc, (void*)gateway, &opcode, 1, nullptr); // Write pop rax to gateway head.
+	memcpy((void*)(gateway + 1), dst, size);
+	hook::DetourEx(hProc, dst, (void*)(gateway + 1), size);
+	hook::DetourEx(hProc, (void*)(gateway + size + 1), func, 13);
 	return gateway;
 }
 #endif
