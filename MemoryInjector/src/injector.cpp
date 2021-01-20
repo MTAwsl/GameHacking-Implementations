@@ -48,8 +48,9 @@ void hook::Detour(void* dst, void* func, const size_t size) {
 	hook::Nop((byte*)dst, size);
 	DWORD oldProtect;
 	VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldProtect);
-	memcpy(dst, "\x50\x48\xB8\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xFF\xE0", 13); // Need "Pop rax"
-	*(uintptr_t*)((uintptr_t)dst + 3) = (uintptr_t)func - (uintptr_t)dst - 13;
+	byte buf[] = "\x50\x48\xB8\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xFF\xE0"; // Need "Pop rax"
+	*(uintptr_t*)((uintptr_t)buf + 3) = (uintptr_t)func - (uintptr_t)dst - 13;
+	memcpy(dst, buf, 13);
 	VirtualProtect(dst, size, oldProtect, &oldProtect);
 }
 #endif
@@ -65,8 +66,12 @@ void hook::DetourEx(HANDLE hProc, void* dst, void* func, const size_t size) {
 	hook::NopEx(hProc, (byte*)dst, size);
 	DWORD oldProtect;
 	VirtualProtectEx(hProc, dst, size, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*(byte*)dst = 0xE9;
-	*(uintptr_t*)((uintptr_t)dst + 1) = (uintptr_t)func - (uintptr_t)dst - 5;
+	byte buf[sizeof(uintptr_t) + 1];
+	
+	*(byte*)buf = 0xE9;
+	*(uintptr_t*)((uintptr_t)buf + 1) = (uintptr_t)func - (uintptr_t)dst - 5;
+
+	WriteProcessMemory(hProc, dst, (void*)buf, sizeof(uintptr_t) + 1, nullptr);
 	VirtualProtectEx(hProc, dst, size, oldProtect, &oldProtect);
 }
 #else
@@ -80,8 +85,10 @@ void hook::DetourEx(HANDLE hProc, void* dst, void* func, const size_t size) {
 	hook::NopEx(hProc, (byte*)dst, size);
 	DWORD oldProtect;
 	VirtualProtectEx(hProc, dst, size, PAGE_EXECUTE_READWRITE, &oldProtect);
-	WriteProcessMemory(hProc, dst, "\x50\x48\xB8\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xFF\xE0", 13, nullptr); // Need "Pop rax"
-	*(uintptr_t*)((uintptr_t)dst + 3) = (uintptr_t)func - (uintptr_t)dst - 13;
+	byte buf[] = "\x50\x48\xB8\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xFF\xE0";
+	*(uintptr_t*)((uintptr_t)buf + 3) = (uintptr_t)func - (uintptr_t)dst - 13;
+
+	WriteProcessMemory(hProc, dst, buf, 13, nullptr); // Need "Pop rax"
 	VirtualProtectEx(hProc, dst, size, oldProtect, &oldProtect);
 }
 #endif
